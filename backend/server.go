@@ -12,22 +12,23 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/lru"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/joho/godotenv"
 	"github.com/vektah/gqlparser/v2/ast"
+	// "github.com/joho/godotenv"
+
 )
 
 const defaultPort = "8080"
 
 func main() {
-	// Load .env file
-	err := godotenv.Load()
-    if err != nil {
-        log.Fatal("Error loading .env file")
-    }
+	// // Load .env file
+	// err := godotenv.Load()
+    // if err != nil {
+    //     log.Fatal("Error loading .env file")
+    // }
 
-	//DB connection
-	database.Connect()
-	defer database.Close()
+	// //DB connection
+	// database.Connect()
+	// defer database.Close()
 
 	port := os.Getenv("PORT")
 	if port == "" {
