@@ -2,6 +2,46 @@
 
 package model
 
+type Article struct {
+	ID                string   `json:"id"`
+	Title             string   `json:"title"`
+	Content           string   `json:"content"`
+	Source            string   `json:"source"`
+	URL               string   `json:"url"`
+	PublishedAt       string   `json:"publishedAt"`
+	Summary           *string  `json:"summary,omitempty"`
+	SimplifiedSummary *string  `json:"simplifiedSummary,omitempty"`
+	Complexity        *int32   `json:"complexity,omitempty"`
+	Tags              []string `json:"tags"`
+	CreatedAt         string   `json:"createdAt"`
+	UpdatedAt         string   `json:"updatedAt"`
+}
+
+type AuthPayload struct {
+	Token string `json:"token"`
+	User  *User  `json:"user"`
+}
+
+type CreateArticleInput struct {
+	Title       string   `json:"title"`
+	Content     string   `json:"content"`
+	Source      string   `json:"source"`
+	URL         string   `json:"url"`
+	PublishedAt string   `json:"publishedAt"`
+	Tags        []string `json:"tags"`
+}
+
+type CreateUserInput struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+	Name     string `json:"name"`
+}
+
+type LoginInput struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
 type Mutation struct {
 }
 
@@ -21,6 +61,9 @@ type Todo struct {
 }
 
 type User struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+	ID        string `json:"id"`
+	Email     string `json:"email"`
+	Name      string `json:"name"`
+	CreatedAt string `json:"createdAt"`
+	UpdatedAt string `json:"updatedAt"`
 }

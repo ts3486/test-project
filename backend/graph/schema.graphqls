@@ -11,11 +11,19 @@ type Todo {
 
 type User {
   id: ID!
+  email: String!
   name: String!
+  createdAt: String!
+  updatedAt: String!
 }
 
 type Query {
   todos: [Todo!]!
+  me: User!
+  articles(limit: Int = 10, offset: Int = 0): [Article!]!
+  article(id: ID!): Article
+  searchArticles(query: String!): [Article!]!
+  hello: String!
 }
 
 input NewTodo {
@@ -23,6 +31,51 @@ input NewTodo {
   userId: String!
 }
 
+input CreateUserInput {
+  email: String!
+  password: String!
+  name: String!
+}
+
+input LoginInput {
+  email: String!
+  password: String!
+}
+
+input CreateArticleInput {
+  title: String!
+  content: String!
+  source: String!
+  url: String!
+  publishedAt: String!
+  tags: [String!]!
+}
+
+type AuthPayload {
+  token: String!
+  user: User!
+}
+
 type Mutation {
   createTodo(input: NewTodo!): Todo!
+  createUser(input: CreateUserInput!): AuthPayload!
+  login(input: LoginInput!): AuthPayload!
+  createArticle(input: CreateArticleInput!): Article!
+  summarizeArticle(id: ID!): Article!
+  refreshArticles: Boolean!
+}
+
+type Article {
+  id: ID!
+  title: String!
+  content: String!
+  source: String!
+  url: String!
+  publishedAt: String!
+  summary: String
+  simplifiedSummary: String
+  complexity: Int
+  tags: [String!]!
+  createdAt: String!
+  updatedAt: String!
 }
