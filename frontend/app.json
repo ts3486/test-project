@@ -1,8 +1,9 @@
 {
   "expo": {
-    "name": "test-project-1",
-    "slug": "test-project-1",
+    "name": "test-project-1-frontend",
+    "slug": "test-project-1-frontend",
     "version": "1.0.0",
+    "scheme": "testproject1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -15,13 +16,18 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.yourcompany.testproject1"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.yourcompany.testproject1"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
     },
     "sdkVersion": "52.0.0"
   }

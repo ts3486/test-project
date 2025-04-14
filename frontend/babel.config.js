@@ -3,6 +3,7 @@ module.exports = function (api) {
   return {
     presets: ['babel-preset-expo'],
     plugins: [
+      'expo-router/babel',
       [
         'module-resolver',
         {
@@ -13,7 +14,7 @@ module.exports = function (api) {
           },
         },
       ],
-      '@babel/plugin-proposal-export-namespace-from'
+      '@babel/plugin-proposal-export-namespace-from',
     ],
   };
 }; 
