@@ -67,32 +67,75 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.log('Auth0 Configuration:');
       console.log('Domain:', discovery.authorizationEndpoint);
       console.log('Redirect URI:', developmentRedirectUri);
+      console.log('Client ID:', 'Om8vxQmndEPr3cnrG8hJaU54GLIteK6W');
 
       const authRequest = new AuthSession.AuthRequest({
         clientId: 'Om8vxQmndEPr3cnrG8hJaU54GLIteK6W',
-        scopes: ['openid', 'profile', 'email'],
+        scopes: ['openid', 'profile', 'email', 'offline_access'],
         redirectUri: developmentRedirectUri,
         usePKCE: true,
+        responseType: 'code',
+        extraParams: {
+          audience: 'https://dev-m3g03cgnow5x3x1i.jp.auth0.com/api/v2/'
+        }
       });
 
       const result = await authRequest.promptAsync(discovery);
-      console.log('Auth Result:', result);
+      console.log('Full Auth Result:', JSON.stringify(result, null, 2));
 
-      if (result.type === 'success') {
-        const { access_token, id_token } = result.params;
-        console.log('Access Token:', access_token);
-        console.log('ID Token:', id_token);
+      if (result.type === 'success' && result.params) {
+        console.log('Auth Params:', JSON.stringify(result.params, null, 2));
+        const { code } = result.params;
+        
+        if (!code) {
+          throw new Error('Authorization code is missing from auth response');
+        }
+
+        // Exchange the authorization code for an access token
+        const tokenResponse = await fetch(discovery.tokenEndpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            grant_type: 'authorization_code',
+            client_id: 'Om8vxQmndEPr3cnrG8hJaU54GLIteK6W',
+            code_verifier: authRequest.codeVerifier || '',
+            code,
+            redirect_uri: developmentRedirectUri,
+          }).toString(),
+        });
+
+        if (!tokenResponse.ok) {
+          const errorData = await tokenResponse.json();
+          console.error('Token exchange error:', errorData);
+          throw new Error('Failed to exchange code for token');
+        }
+
+        const tokenData = await tokenResponse.json();
+        console.log('Token Response:', tokenData);
+
+        const { access_token, id_token } = tokenData;
+        
+        if (!access_token) {
+          throw new Error('Access token is missing from token response');
+        }
         
         await AsyncStorage.setItem('auth_token', access_token);
         
         const userInfo = await fetchUserInfo(access_token);
         console.log('User Info:', userInfo);
         
+        if (!userInfo) {
+          throw new Error('Failed to fetch user information');
+        }
+        
         await AsyncStorage.setItem('user_data', JSON.stringify(userInfo));
         setUser(userInfo);
         setIsAuthenticated(true);
       } else {
         console.error('Auth failed:', result);
+        throw new Error('Authentication failed');
       }
     } catch (error) {
       console.error('Login error:', error);
