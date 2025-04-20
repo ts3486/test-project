@@ -15,6 +15,7 @@
     "@react-navigation/native-stack": "^6.9.17",
     "expo": "~52.0.42",
     "expo-auth-session": "^6.0.3",
+    "expo-linear-gradient": "^14.0.2",
     "expo-random": "^14.0.1",
     "expo-status-bar": "~2.0.1",
     "expo-web-browser": "^14.0.2",

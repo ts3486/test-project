@@ -10,8 +10,10 @@ const GET_ARTICLES = gql`
     articles(limit: $limit, offset: $offset) {
       id
       title
+      content
       summary
       source
+      url
       publishedAt
       tags
     }
@@ -21,8 +23,10 @@ const GET_ARTICLES = gql`
 interface Article {
   id: string;
   title: string;
-  summary: string;
+  content: string;
+  summary?: string;
   source: string;
+  url: string;
   publishedAt: string;
   tags: string[];
 }
@@ -83,7 +87,11 @@ export const HomeScreen = () => {
         <ScrollView
           style={styles.feed}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            <RefreshControl 
+              refreshing={refreshing} 
+              onRefresh={onRefresh}
+              tintColor="#007AFF"
+            />
           }
         >
           {data?.articles?.length > 0 ? (
@@ -104,17 +112,18 @@ export const HomeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#000',
   },
   header: {
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: '#1a1a1a',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 8,
+    color: '#fff',
   },
   welcomeText: {
     fontSize: 16,
