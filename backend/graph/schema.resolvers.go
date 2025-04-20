@@ -7,6 +7,8 @@ package graph
 import (
 	"context"
 	"fmt"
+	"log"
+	"time"
 
 	"github.com/taoshimomura/test-project-1/backend/graph/model"
 )
@@ -53,7 +55,65 @@ func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
 
 // Articles is the resolver for the articles field.
 func (r *queryResolver) Articles(ctx context.Context, limit *int32, offset *int32) ([]*model.Article, error) {
-	panic(fmt.Errorf("not implemented: Articles - articles"))
+	log.Printf("Articles resolver called with limit=%v, offset=%v", limit, offset)
+
+	now := time.Now().Format(time.RFC3339)
+
+	// Create sample articles
+	articles := []*model.Article{
+		{
+			ID:          "1",
+			Title:       "Sample Article 1",
+			Content:     "This is the content of sample article 1.",
+			Source:      "Sample Source",
+			URL:         "https://example.com/article1",
+			PublishedAt: now,
+			Summary:     stringPtr("This is a summary of sample article 1."),
+			Tags:        []string{"tech", "news"},
+			CreatedAt:   now,
+			UpdatedAt:   now,
+		},
+		{
+			ID:          "2",
+			Title:       "Sample Article 2",
+			Content:     "This is the content of sample article 2.",
+			Source:      "Sample Source",
+			URL:         "https://example.com/article2",
+			PublishedAt: now,
+			Summary:     stringPtr("This is a summary of sample article 2."),
+			Tags:        []string{"science", "research"},
+			CreatedAt:   now,
+			UpdatedAt:   now,
+		},
+	}
+
+	log.Printf("Created %d sample articles", len(articles))
+
+	// Apply pagination if limit is specified
+	if limit != nil {
+		start := int32(0)
+		if offset != nil {
+			start = *offset
+		}
+		end := start + *limit
+		if end > int32(len(articles)) {
+			end = int32(len(articles))
+		}
+		if start >= end {
+			log.Printf("No articles to return after pagination")
+			return []*model.Article{}, nil
+		}
+		log.Printf("Returning articles from index %d to %d", start, end)
+		return articles[start:end], nil
+	}
+
+	log.Printf("Returning all %d articles", len(articles))
+	return articles, nil
+}
+
+// Helper function to create string pointer
+func stringPtr(s string) *string {
+	return &s
 }
 
 // Article is the resolver for the article field.
@@ -68,7 +128,7 @@ func (r *queryResolver) SearchArticles(ctx context.Context, query string) ([]*mo
 
 // Hello is the resolver for the hello field.
 func (r *queryResolver) Hello(ctx context.Context) (string, error) {
-	panic(fmt.Errorf("not implemented: Hello - hello"))
+	return "Hello, World!", nil
 }
 
 // Mutation returns MutationResolver implementation.

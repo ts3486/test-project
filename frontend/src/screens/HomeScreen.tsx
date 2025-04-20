@@ -3,6 +3,20 @@ import { View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator }
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../auth/AuthContext';
 import ArticleCard from '../components/ArticleCard';
+import { gql, useQuery } from '@apollo/client';
+
+const GET_ARTICLES = gql`
+  query GetArticles($limit: Int, $offset: Int) {
+    articles(limit: $limit, offset: $offset) {
+      id
+      title
+      summary
+      source
+      publishedAt
+      tags
+    }
+  }
+`;
 
 interface Article {
   id: string;
@@ -10,67 +24,41 @@ interface Article {
   summary: string;
   source: string;
   publishedAt: string;
-  imageUrl?: string;
+  tags: string[];
 }
 
 export const HomeScreen = () => {
-  const { user, getAccessToken } = useAuth();
-  const [articles, setArticles] = useState<Article[]>([]);
+  const { user } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const fetchArticles = async () => {
-    try {
-      const token = await getAccessToken();
-      if (!token) {
-        throw new Error('No access token available');
-      }
-
-      console.log('Fetching articles with token:', token.substring(0, 10) + '...');
-      
-      // For development on iOS simulator, use your machine's IP address instead of localhost
-      const API_URL = 'http://10.0.2.2:3000/api/articles'; // For Android emulator
-      // const API_URL = 'http://localhost:3000/api/articles'; // For iOS simulator
-      
-      console.log('Making request to:', API_URL);
-
-      const response = await fetch(API_URL, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      console.log('Response status:', response.status);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Error response:', errorText);
-        throw new Error(`Failed to fetch articles: ${response.status} ${errorText}`);
-      }
-
-      const data = await response.json();
-      console.log('Received articles:', data.length);
-      setArticles(data);
-      setError(null);
-    } catch (err) {
-      console.error('Detailed error fetching articles:', err);
-      setError('Failed to load articles. Please check your connection and try again.');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
+  const { loading, error, data, refetch } = useQuery(GET_ARTICLES, {
+    variables: { limit: 10, offset: 0 },
+    fetchPolicy: 'network-only',
+    onError: (error) => {
+      console.error('GraphQL Error:', error);
+      setErrorMessage(error.message);
+    },
+  });
 
   useEffect(() => {
-    fetchArticles();
-  }, []);
+    console.log('HomeScreen mounted');
+    console.log('Current user:', user);
+    console.log('Loading state:', loading);
+    console.log('Error state:', error);
+    console.log('Data:', data);
+  }, [user, loading, error, data]);
 
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
-    fetchArticles();
-  }, []);
+    setErrorMessage(null);
+    refetch()
+      .catch((error) => {
+        console.error('Refresh error:', error);
+        setErrorMessage(error.message);
+      })
+      .finally(() => setRefreshing(false));
+  }, [refetch]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -82,11 +70,12 @@ export const HomeScreen = () => {
       {loading ? (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color="#007AFF" />
+          <Text style={styles.loadingText}>Loading articles...</Text>
         </View>
-      ) : error ? (
+      ) : error || errorMessage ? (
         <View style={styles.centered}>
-          <Text style={styles.errorText}>{error}</Text>
-          <Text style={styles.retryText} onPress={fetchArticles}>
+          <Text style={styles.errorText}>{errorMessage || error?.message}</Text>
+          <Text style={styles.retryText} onPress={onRefresh}>
             Tap to retry
           </Text>
         </View>
@@ -97,8 +86,8 @@ export const HomeScreen = () => {
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
         >
-          {articles.length > 0 ? (
-            articles.map((article) => (
+          {data?.articles?.length > 0 ? (
+            data.articles.map((article: Article) => (
               <ArticleCard key={article.id} article={article} />
             ))
           ) : (
@@ -138,6 +127,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 20,
+  },
+  loadingText: {
+    marginTop: 10,
+    color: '#666',
   },
   errorText: {
     color: '#FF3B30',

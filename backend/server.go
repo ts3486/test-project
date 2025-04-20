@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
@@ -15,6 +16,7 @@ import (
 )
 
 const defaultPort = "8080"
+const defaultHost = "172.20.12.112"
 
 func main() {
 	port := os.Getenv("PORT")
@@ -23,6 +25,12 @@ func main() {
 	}
 
 	srv := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}))
+
+	// Add error recovery middleware
+	srv.SetRecoverFunc(func(ctx context.Context, err interface{}) error {
+		log.Printf("Recovered from panic: %v", err)
+		return nil
+	})
 
 	srv.AddTransport(transport.Options{})
 	srv.AddTransport(transport.GET{})
@@ -38,6 +46,6 @@ func main() {
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", srv)
 
-	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	log.Printf("connect to http://%s:%s/ for GraphQL playground", defaultHost, port)
+	log.Fatal(http.ListenAndServe(defaultHost+":"+port, nil))
 }

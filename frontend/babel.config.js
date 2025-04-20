@@ -3,9 +3,8 @@ module.exports = function (api) {
   return {
     presets: ['babel-preset-expo'],
     plugins: [
-      'expo-router/babel',
       [
-        'module-resolver',
+        'babel-plugin-module-resolver',
         {
           root: ['./src'],
           extensions: ['.ios.js', '.android.js', '.js', '.ts', '.tsx', '.json'],
@@ -14,7 +13,6 @@ module.exports = function (api) {
           },
         },
       ],
-      '@babel/plugin-proposal-export-namespace-from',
     ],
   };
 }; 
