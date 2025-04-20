@@ -16,6 +16,9 @@ const GET_ARTICLES = gql`
       url
       publishedAt
       tags
+      imageURL
+      satiricalSummary
+      satiricalImageURL
     }
   }
 `;
@@ -29,6 +32,9 @@ interface Article {
   url: string;
   publishedAt: string;
   tags: string[];
+  imageURL?: string;
+  satiricalSummary?: string;
+  satiricalImageURL?: string;
 }
 
 export const HomeScreen = () => {

@@ -15,6 +15,10 @@ type Article struct {
 	Tags              []string `json:"tags"`
 	CreatedAt         string   `json:"createdAt"`
 	UpdatedAt         string   `json:"updatedAt"`
+	SatiricalSummary  *string  `json:"satiricalSummary,omitempty"`
+	SatiricalImageURL *string  `json:"satiricalImageURL,omitempty"`
+	ImageURL          *string  `json:"imageURL,omitempty"`
+	IsProcessed       bool     `json:"isProcessed"`
 }
 
 type AuthPayload struct {

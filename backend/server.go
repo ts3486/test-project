@@ -6,12 +6,14 @@ import (
 	"net/http"
 	"os"
 
+	"backend/graph"
+
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/handler/lru"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/taoshimomura/test-project-1/backend/graph"
+	"github.com/rs/cors"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
@@ -43,8 +45,20 @@ func main() {
 		Cache: lru.New[string](100),
 	})
 
-	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", srv)
+	// Create a new CORS middleware
+	corsMiddleware := cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"}, // In production, replace with specific origins
+		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
+		AllowedHeaders:   []string{"Content-Type", "Authorization"},
+		AllowCredentials: true,
+	})
+
+	// Apply CORS middleware
+	handler := corsMiddleware.Handler(srv)
+	playgroundHandler := corsMiddleware.Handler(playground.Handler("GraphQL playground", "/query"))
+
+	http.Handle("/", playgroundHandler)
+	http.Handle("/query", handler)
 
 	log.Printf("connect to http://%s:%s/ for GraphQL playground", defaultHost, port)
 	log.Fatal(http.ListenAndServe(defaultHost+":"+port, nil))

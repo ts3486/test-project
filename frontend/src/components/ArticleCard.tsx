@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Image, Dimensions, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 interface Article {
@@ -11,7 +11,9 @@ interface Article {
   publishedAt: string;
   summary?: string;
   tags: string[];
-  imageUrl?: string;
+  imageURL?: string;
+  satiricalSummary?: string;
+  satiricalImageURL?: string;
 }
 
 interface ArticleCardProps {
@@ -23,7 +25,9 @@ const CARD_HEIGHT = viewportHeight * 0.5;
 
 const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
   const [imageError, setImageError] = useState(false);
+  const [imageLoading, setImageLoading] = useState(true);
   const [showFullDescription, setShowFullDescription] = useState(false);
+  const [showSatirical, setShowSatirical] = useState(false);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -34,71 +38,110 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
     });
   };
 
-  const handleImageError = () => {
+  const handleImageError = (error: any) => {
+    console.log('Image error:', error);
     setImageError(true);
+    setImageLoading(false);
   };
 
   const toggleDescription = () => {
     setShowFullDescription(!showFullDescription);
   };
 
+  const toggleView = () => {
+    setShowSatirical(!showSatirical);
+    // Reset loading state when toggling between images
+    setImageLoading(true);
+    setImageError(false);
+  };
+
+  const currentImageUrl = showSatirical ? article.satiricalImageURL : article.imageURL;
+  const currentSummary = showSatirical ? article.satiricalSummary : (article.summary || article.content);
+
+  const handleImageLoad = () => {
+    console.log('Image loaded successfully:', currentImageUrl);
+    setImageLoading(false);
+    setImageError(false);
+  };
+
+  // Reset loading state when the article changes
+  React.useEffect(() => {
+    console.log('Article changed:', {
+      articleId: article.id,
+      currentImageUrl,
+      imageLoading,
+      imageError
+    });
+    setImageLoading(true);
+    setImageError(false);
+  }, [article.id, currentImageUrl]);
+
   return (
     <View style={styles.wrapper}>
       <View style={styles.container}>
-        {/* Image Section with Overlay */}
-        <View style={styles.imageContainer}>
-          {!imageError && article.imageUrl ? (
+        {/* Image Section */}
+        <View style={styles.imageSection}>
+          {imageLoading && !currentImageUrl && (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#007AFF" />
+            </View>
+          )}
+          
+          {currentImageUrl && !imageError ? (
             <Image
-              source={{ uri: article.imageUrl }}
+              source={{ uri: currentImageUrl }}
               style={styles.image}
               onError={handleImageError}
+              onLoad={handleImageLoad}
+              resizeMode="cover"
             />
           ) : (
             <View style={styles.noImage}>
               <Text style={styles.noImageText}>No Image Available</Text>
             </View>
           )}
-          
-          {/* Gradient Overlay */}
-          <LinearGradient
-            colors={['transparent', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.8)']}
-            locations={[0, 0.5, 1]}
-            style={styles.gradient}
+        </View>
+
+        {/* Content Section */}
+        <View style={styles.contentSection}>
+          <Text style={styles.title} numberOfLines={1}>
+            {article.title}
+          </Text>
+
+          <View style={styles.metadata}>
+            <Text style={styles.source}>{article.source}</Text>
+            <Text style={styles.date}>{formatDate(article.publishedAt)}</Text>
+          </View>
+
+          <Text 
+            style={styles.description}
+            numberOfLines={showFullDescription ? undefined : 2}
           >
-            {/* Title */}
-            <Text style={styles.title} numberOfLines={1}>
-              {article.title}
+            {currentSummary}
+          </Text>
+
+          {!showFullDescription && (
+            <Text style={styles.readMore} onPress={toggleDescription}>
+              Read More
             </Text>
+          )}
 
-            {/* Description and Metadata */}
-            <View style={styles.overlayContent}>
-              <View style={styles.metadata}>
-                <Text style={styles.source}>{article.source}</Text>
-                <Text style={styles.date}>{formatDate(article.publishedAt)}</Text>
+          <View style={styles.tagsContainer}>
+            {article.tags.map((tag, index) => (
+              <View key={index} style={styles.tag}>
+                <Text style={styles.tagText}>{tag}</Text>
               </View>
+            ))}
+          </View>
 
-              <Text 
-                style={styles.description}
-                numberOfLines={showFullDescription ? undefined : 2}
-              >
-                {article.summary || article.content}
-              </Text>
-
-              {!showFullDescription && (
-                <Text style={styles.readMore} onPress={toggleDescription}>
-                  Read More
-                </Text>
-              )}
-
-              <View style={styles.tagsContainer}>
-                {article.tags.map((tag, index) => (
-                  <View key={index} style={styles.tag}>
-                    <Text style={styles.tagText}>{tag}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          </LinearGradient>
+          <TouchableOpacity 
+            style={styles.toggleButton}
+            onPress={toggleView}
+          >
+            <Text style={styles.toggleButtonText}>
+              {showSatirical ? 'Show Original' : 'Show Satirical Version'}
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
     </View>
@@ -112,23 +155,35 @@ const styles = StyleSheet.create({
   },
   container: {
     width: '100%',
-    height: CARD_HEIGHT,
     backgroundColor: '#1a1a1a',
+    borderRadius: 12,
+    overflow: 'hidden',
   },
-  imageContainer: {
+  imageSection: {
     width: '100%',
-    height: '100%',
+    height: 400,
     position: 'relative',
   },
   image: {
     width: '100%',
     height: '100%',
-    resizeMode: 'cover',
+    opacity: 1,
+  },
+  loadingContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    zIndex: 2,
   },
   noImage: {
     width: '100%',
     height: '100%',
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#f0f0f0',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -136,23 +191,15 @@ const styles = StyleSheet.create({
     color: '#666',
     fontSize: 16,
   },
-  gradient: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: '60%',
+  contentSection: {
     padding: 16,
-    justifyContent: 'flex-end',
+    backgroundColor: '#1a1a1a',
   },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#fff',
     marginBottom: 8,
-  },
-  overlayContent: {
-    width: '100%',
   },
   metadata: {
     flexDirection: 'row',
@@ -183,6 +230,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+    marginBottom: 8,
   },
   tag: {
     backgroundColor: 'rgba(255,255,255,0.1)',
@@ -193,6 +241,17 @@ const styles = StyleSheet.create({
   tagText: {
     color: '#fff',
     fontSize: 12,
+  },
+  toggleButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    padding: 8,
+    borderRadius: 20,
+    alignSelf: 'flex-start',
+  },
+  toggleButtonText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
   },
 });
 
